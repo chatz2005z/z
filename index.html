@@ -406,7 +406,7 @@ async function login() {
 
  try {
   if (role === "admin") {
-   const { data, error } = await supabase.auth.signInWithPassword({
+   const { data, error } = await sbClient.auth.signInWithPassword({
     email: id,
     password
    });

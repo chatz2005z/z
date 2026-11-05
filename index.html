@@ -1,0 +1,673 @@
+
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#075e54">
+<title>SN Private Chat</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+ font-family:Arial,sans-serif;
+ background:#e9edef;
+ color:#202c33;
+ min-height:100vh;
+}
+button,input,textarea{font:inherit}
+button{cursor:pointer;border:0}
+.hidden{display:none!important}
+#app{min-height:100vh}
+
+/* LOGIN */
+.login-screen{
+ min-height:100vh;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ padding:20px;
+ background:linear-gradient(140deg,#075e54,#128c7e,#25a69a);
+}
+.login-card{
+ width:100%;max-width:390px;
+ background:white;border-radius:18px;
+ padding:30px 25px;
+ box-shadow:0 15px 50px #003b3650;
+}
+.logo{
+ width:65px;height:65px;border-radius:50%;
+ background:#075e54;color:white;
+ display:flex;align-items:center;
+ justify-content:center;font-size:27px;
+ font-weight:bold;margin:0 auto 15px;
+}
+.login-card h2{text-align:center;color:#075e54}
+.sub{text-align:center;color:#667781;font-size:13px;margin:9px 0 25px}
+.tabs{display:flex;gap:8px;margin-bottom:20px}
+.tabs button{
+ flex:1;padding:12px;border-radius:8px;
+ background:#edf1f2;color:#455a64;font-weight:bold;
+}
+.tabs button.active{background:#075e54;color:white}
+.field{margin-bottom:15px}
+.field label{display:block;font-size:13px;margin-bottom:7px;font-weight:bold}
+.field input{
+ width:100%;padding:13px;
+ border:1px solid #d5dfe2;border-radius:8px;outline:none;
+}
+.field input:focus{border-color:#128c7e}
+.primary{
+ width:100%;padding:14px;background:#075e54;
+ color:white;border-radius:8px;font-weight:bold;
+}
+.primary:active{opacity:.8}
+.note{text-align:center;font-size:11px;color:#86949a;margin-top:16px}
+
+/* APP */
+.app-screen{height:100vh;display:flex;overflow:hidden}
+.sidebar{
+ width:340px;max-width:40%;
+ background:white;border-right:1px solid #d9e0e3;
+ display:flex;flex-direction:column;
+}
+.side-head{
+ padding:16px;background:#075e54;color:white;
+ display:flex;align-items:center;justify-content:space-between;
+}
+.side-head h3{font-size:18px}
+.side-head button{background:transparent;color:white;font-size:20px}
+.profile{
+ padding:18px;background:#f5f7f8;
+ display:flex;align-items:center;gap:12px;
+ border-bottom:1px solid #e5e9eb;
+}
+.avatar{
+ width:43px;height:43px;border-radius:50%;
+ background:#128c7e;color:white;
+ display:flex;align-items:center;justify-content:center;
+ font-weight:bold;font-size:17px;flex-shrink:0;
+}
+.profile small{color:#667781}
+.customer-list{overflow-y:auto;flex:1}
+.customer{
+ padding:15px;display:flex;gap:12px;
+ align-items:center;border-bottom:1px solid #edf0f1;
+ cursor:pointer;
+}
+.customer:hover,.customer.selected{background:#e8f5f2}
+.customer strong{font-size:14px}
+.customer small{display:block;color:#667781;margin-top:5px}
+.side-actions{padding:12px;border-top:1px solid #ddd}
+.side-actions button{
+ width:100%;padding:11px;margin:4px 0;
+ border-radius:7px;background:#e7f3f1;color:#075e54;
+ font-weight:bold;
+}
+
+/* CHAT */
+.chat{
+ flex:1;min-width:0;display:flex;flex-direction:column;
+ background:#efeae2;
+}
+.chat-head{
+ height:68px;background:#075e54;color:white;
+ display:flex;align-items:center;padding:10px 15px;gap:12px;
+}
+.chat-head .avatar{background:#ffffff30}
+.chat-info{flex:1}
+.chat-info small{display:block;color:#d0e7e3;margin-top:4px}
+.chat-head button{
+ background:transparent;color:white;font-size:20px;padding:8px;
+}
+.messages{
+ flex:1;overflow-y:auto;padding:20px 5%;
+ display:flex;flex-direction:column;gap:9px;
+ background-color:#efeae2;
+ background-image:radial-gradient(#d8d1c7 0.5px,transparent 0.5px);
+ background-size:18px 18px;
+}
+.date-label{
+ align-self:center;background:#ffffffd9;
+ padding:7px 13px;border-radius:8px;
+ font-size:11px;color:#667781;
+}
+.msg{
+ max-width:78%;min-width:90px;
+ padding:9px 11px 7px;
+ border-radius:9px;background:white;
+ align-self:flex-start;
+ box-shadow:0 1px 1px #0001;
+ position:relative;overflow-wrap:anywhere;
+}
+.msg.mine{align-self:flex-end;background:#d9fdd3}
+.msg p{font-size:14px;white-space:pre-wrap;line-height:1.45}
+.msg .time{
+ display:block;text-align:right;
+ font-size:10px;color:#738078;margin-top:5px;
+}
+.reply-preview{
+ border-left:3px solid #128c7e;
+ background:#00000009;padding:7px;
+ margin-bottom:7px;border-radius:4px;
+ font-size:12px;color:#526b65;
+}
+.msg img,.msg video{
+ max-width:100%;max-height:260px;
+ border-radius:6px;display:block;
+}
+.msg-actions{
+ display:flex;gap:12px;margin-top:6px;
+ justify-content:flex-end;
+}
+.msg-actions button{
+ font-size:11px;background:transparent;color:#128c7e;
+}
+.input-area{
+ background:#f0f2f5;padding:12px;
+ display:flex;align-items:center;gap:8px;
+}
+.input-area button{
+ background:transparent;color:#54656e;
+ font-size:23px;padding:5px;
+}
+.input-area textarea{
+ flex:1;resize:none;max-height:100px;
+ min-height:43px;padding:12px;
+ border:0;border-radius:22px;outline:none;
+}
+.send-btn{
+ background:#075e54!important;color:white!important;
+ width:43px;height:43px;border-radius:50%;
+ font-size:18px!important;
+}
+.reply-bar{
+ background:#e0f2ed;padding:9px 15px;
+ display:flex;justify-content:space-between;
+ font-size:12px;color:#075e54;
+}
+.reply-bar button{background:transparent;color:#075e54}
+
+/* ADMIN */
+.admin-panel{
+ position:absolute;inset:0;background:#f3f6f7;
+ z-index:5;overflow-y:auto;padding:20px;
+}
+.admin-top{
+ display:flex;justify-content:space-between;
+ align-items:center;gap:10px;margin-bottom:20px;
+}
+.admin-top h2{color:#075e54}
+.admin-top button{
+ background:#075e54;color:white;
+ padding:10px 14px;border-radius:7px;
+}
+.admin-grid{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:15px;max-width:900px;
+}
+.admin-box{
+ background:white;border-radius:12px;
+ padding:18px;box-shadow:0 2px 9px #0000000b;
+}
+.admin-box h3{font-size:16px;color:#075e54;margin-bottom:15px}
+.admin-box input{
+ width:100%;padding:11px;margin:7px 0;
+ border:1px solid #d8e0e3;border-radius:7px;
+}
+.admin-box button{
+ padding:11px;background:#075e54;
+ color:white;border-radius:7px;margin-top:7px;
+}
+.danger{background:#b42318!important}
+.warning{
+ font-size:12px;color:#986000;
+ background:#fff6dc;padding:12px;
+ border-radius:8px;margin-bottom:15px;
+}
+
+/* MOBILE */
+@media(max-width:650px){
+ .sidebar{width:100%;max-width:100%}
+ .chat{width:100%}
+ .app-screen.mobile-chat .sidebar{display:none}
+ .app-screen:not(.mobile-chat) .chat{display:none}
+ .messages{padding:15px 10px}
+ .msg{max-width:88%}
+ .admin-grid{grid-template-columns:1fr}
+ .admin-panel{padding:14px}
+}
+</style>
+</head>
+
+<body>
+<div id="app">
+
+<!-- LOGIN -->
+<section class="login-screen" id="loginScreen">
+ <div class="login-card">
+  <div class="logo">SN</div>
+  <h2>SN Private Chat</h2>
+  <div class="sub">Secure Customer Communication</div>
+
+  <div class="tabs">
+   <button class="active" id="customerTab" onclick="setRole('customer')">Customer</button>
+   <button id="adminTab" onclick="setRole('admin')">Admin</button>
+  </div>
+
+  <div class="field">
+   <label>Login ID</label>
+   <input id="loginId" placeholder="अपनी ID डालें" autocomplete="username">
+  </div>
+
+  <div class="field">
+   <label>Password</label>
+   <input id="loginPassword" type="password" placeholder="अपना Password डालें" autocomplete="current-password">
+  </div>
+
+  <button class="primary" onclick="login()">START CHAT</button>
+  <div class="note">Private Communication System</div>
+ </div>
+</section>
+
+<!-- MAIN APP -->
+<section class="app-screen hidden" id="mainScreen">
+
+ <aside class="sidebar">
+  <div class="side-head">
+   <h3>SN Private Chat</h3>
+   <button onclick="logout()">↪</button>
+  </div>
+
+  <div class="profile">
+   <div class="avatar" id="profileAvatar">SN</div>
+   <div>
+    <strong id="profileName">Customer</strong>
+    <small id="profileRole">Private Chat</small>
+   </div>
+  </div>
+
+  <div class="customer-list" id="customerList">
+   <div class="customer selected">
+    <div class="avatar">SN</div>
+    <div><strong>SN Admin</strong><small>Private conversation</small></div>
+   </div>
+  </div>
+
+  <div class="side-actions hidden" id="adminSideActions">
+   <button onclick="openAdmin()">⚙ Admin Panel</button>
+   <button onclick="clearCurrent()">Clear Current Chat</button>
+  </div>
+ </aside>
+
+ <main class="chat">
+  <header class="chat-head">
+   <button class="hidden" id="backBtn" onclick="backToList()">‹</button>
+   <div class="avatar">SN</div>
+   <div class="chat-info">
+    <strong id="chatTitle">SN Admin</strong>
+    <small>Private Conversation</small>
+   </div>
+   <button onclick="clearCurrent()">⌫</button>
+   <button onclick="logout()">⋮</button>
+  </header>
+
+  <div class="messages" id="messages">
+   <div class="date-label">TODAY</div>
+  </div>
+
+  <div class="reply-bar hidden" id="replyBar">
+   <span id="replyText">Reply</span>
+   <button onclick="cancelReply()">✕</button>
+  </div>
+
+  <div class="input-area">
+   <button onclick="toggleEmoji()" title="Emoji">☺</button>
+   <button onclick="document.getElementById('mediaInput').click()" title="Media">＋</button>
+   <input type="file" id="mediaInput" accept="image/*,video/*" hidden onchange="sendMedia(event)">
+   <textarea id="messageInput" rows="1" placeholder="Type a message..." onkeydown="handleEnter(event)"></textarea>
+   <button class="send-btn" onclick="sendMessage()">➤</button>
+  </div>
+  <div id="emojiPanel" class="hidden" style="padding:12px;background:white;display:flex;flex-wrap:wrap;gap:12px">
+   <button onclick="addEmoji('😀')">😀</button>
+   <button onclick="addEmoji('😂')">😂</button>
+   <button onclick="addEmoji('❤️')">❤️</button>
+   <button onclick="addEmoji('👍')">👍</button>
+   <button onclick="addEmoji('🙏')">🙏</button>
+   <button onclick="addEmoji('😍')">😍</button>
+   <button onclick="addEmoji('🔥')">🔥</button>
+   <button onclick="addEmoji('😊')">😊</button>
+   <button onclick="addEmoji('🎉')">🎉</button>
+  </div>
+ </main>
+
+ <!-- ADMIN PANEL -->
+ <section class="admin-panel hidden" id="adminPanel">
+  <div class="admin-top">
+   <h2>SN Admin Panel</h2>
+   <button onclick="closeAdmin()">← Back to Chat</button>
+  </div>
+
+  <div class="warning">
+   अभी यह Frontend Preview है। वास्तविक Customer Registration और Database संचालन Supabase कनेक्ट होने के बाद सक्रिय होंगे।
+  </div>
+
+  <div class="admin-grid">
+
+   <div class="admin-box">
+    <h3>＋ Customer Registration</h3>
+    <input id="newName" placeholder="Customer Name">
+    <input id="newId" placeholder="Create Customer ID">
+    <input id="newPrefix" placeholder="Password Prefix (Example: Z)">
+    <button onclick="createCustomer()">Create Customer</button>
+    <p id="createStatus" style="font-size:12px;margin-top:10px"></p>
+   </div>
+
+   <div class="admin-box">
+    <h3>⏱ Time Password Preview</h3>
+    <p style="font-size:13px">Server time आधारित Password का उदाहरण:</p>
+    <div style="font-size:25px;font-weight:bold;color:#075e54;margin:15px 0" id="timePassword">Z0000</div>
+    <p style="font-size:12px;color:#667781">वास्तविक Password सत्यापन Supabase में होगा।</p>
+   </div>
+
+   <div class="admin-box">
+    <h3>Customer List</h3>
+    <div id="adminCustomers">अभी कोई Customer उपलब्ध नहीं है।</div>
+   </div>
+
+   <div class="admin-box">
+    <h3>Chat Management</h3>
+    <button onclick="clearCurrent()">Clear Current Chat</button><br>
+    <button class="danger" onclick="deleteCurrent()">Delete Current Chat</button><br>
+    <button class="danger" onclick="clearAll()">All Chat Clear</button><br>
+    <button class="danger" onclick="deleteAll()">All Chat Delete</button>
+   </div>
+
+  </div>
+ </section>
+
+</section>
+</div>
+
+<script>
+/*
+ SN PRIVATE CHAT
+ FRONTEND PREVIEW ONLY
+
+ Supabase connection, secure authentication,
+ permanent database storage and server-side
+ expiry will be added in the next phase.
+*/
+
+let role="customer";
+let currentUser=null;
+let replyMessage=null;
+let customers=[];
+let chats={};
+let currentChat="admin";
+let mediaURLs=[];
+
+function setRole(r){
+ role=r;
+ document.getElementById("customerTab").classList.toggle("active",r==="customer");
+ document.getElementById("adminTab").classList.toggle("active",r==="admin");
+ document.getElementById("loginId").placeholder=
+ r==="admin"?"Admin ID":"Customer ID";
+}
+
+function login(){
+ const id=document.getElementById("loginId").value.trim();
+ const pass=document.getElementById("loginPassword").value;
+
+ if(!id||!pass){
+  alert("कृपया ID और Password भरें।");
+  return;
+ }
+
+ // Real authentication will be connected through Supabase.
+ alert("Supabase कनेक्शन अभी बाकी है। वास्तविक Login अगले चरण में सक्रिय होगा।");
+}
+
+function logout(){
+ if(!confirm("क्या आप चैट से बाहर निकलना चाहते हैं?"))return;
+ document.getElementById("mainScreen").classList.add("hidden");
+ document.getElementById("loginScreen").classList.remove("hidden");
+ document.getElementById("loginPassword").value="";
+ document.getElementById("loginId").value="";
+ cancelReply();
+}
+
+function initializeChat(){
+ // This function will be called after successful Supabase login.
+ document.getElementById("loginScreen").classList.add("hidden");
+ document.getElementById("mainScreen").classList.remove("hidden");
+}
+
+function getMessages(){
+ if(!chats[currentChat])chats[currentChat]=[];
+ return chats[currentChat];
+}
+
+function renderMessages(){
+ const area=document.getElementById("messages");
+ area.innerHTML='<div class="date-label">TODAY</div>';
+
+ const now=Date.now();
+ const messages=getMessages();
+
+ messages.forEach((m,index)=>{
+  // Customer side: hide every message after 60 seconds.
+  // Admin side: retain all messages.
+  if(role==="customer" && now-m.createdAt>=60000)return;
+
+  const div=document.createElement("div");
+  div.className="msg "+(m.sender===role?"mine":"");
+
+  if(m.reply){
+   const rp=document.createElement("div");
+   rp.className="reply-preview";
+   rp.textContent="↪ "+m.reply;
+   div.appendChild(rp);
+  }
+
+  if(m.type==="text"){
+   const p=document.createElement("p");
+   p.textContent=m.text;
+   div.appendChild(p);
+  }else{
+   const media=document.createElement(m.type==="video"?"video":"img");
+   media.src=m.url;
+   if(m.type==="video"){
+    media.controls=true;
+    media.playsInline=true;
+   }
+   div.appendChild(media);
+  }
+
+  const time=document.createElement("span");
+  time.className="time";
+  time.textContent=new Date(m.createdAt).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"});
+  div.appendChild(time);
+
+  const actions=document.createElement("div");
+  actions.className="msg-actions";
+
+  const replyBtn=document.createElement("button");
+  replyBtn.textContent="Reply";
+  replyBtn.onclick=()=>startReply(index);
+  actions.appendChild(replyBtn);
+
+  div.appendChild(actions);
+  area.appendChild(div);
+ });
+
+ area.scrollTop=area.scrollHeight;
+}
+
+function sendMessage(){
+ const input=document.getElementById("messageInput");
+ const value=input.value.trim();
+ if(!value)return;
+
+ getMessages().push({
+  id:crypto.randomUUID(),
+  sender:role,
+  type:"text",
+  text:value,
+  reply:replyMessage,
+  createdAt:Date.now()
+ });
+
+ input.value="";
+ cancelReply();
+ renderMessages();
+}
+
+function sendMedia(event){
+ const file=event.target.files[0];
+ if(!file)return;
+
+ if(!file.type.startsWith("image/")&&!file.type.startsWith("video/")){
+  alert("केवल फोटो और वीडियो भेज सकते हैं।");
+  event.target.value="";
+  return;
+ }
+
+ const url=URL.createObjectURL(file);
+ mediaURLs.push(url);
+
+ getMessages().push({
+  id:crypto.randomUUID(),
+  sender:role,
+  type:file.type.startsWith("video/")?"video":"image",
+  url:url,
+  reply:replyMessage,
+  createdAt:Date.now()
+ });
+
+ cancelReply();
+ renderMessages();
+ event.target.value="";
+}
+
+function startReply(index){
+ const m=getMessages()[index];
+ replyMessage=m.type==="text"?m.text:"Media";
+ document.getElementById("replyText").textContent="Reply: "+replyMessage;
+ document.getElementById("replyBar").classList.remove("hidden");
+ document.getElementById("messageInput").focus();
+}
+
+function cancelReply(){
+ replyMessage=null;
+ document.getElementById("replyBar").classList.add("hidden");
+}
+
+function handleEnter(event){
+ if(event.key==="Enter"&&!event.shiftKey){
+  event.preventDefault();
+  sendMessage();
+ }
+}
+
+function toggleEmoji(){
+ document.getElementById("emojiPanel").classList.toggle("hidden");
+}
+
+function addEmoji(emoji){
+ const input=document.getElementById("messageInput");
+ input.value+=emoji;
+ input.focus();
+}
+
+function clearCurrent(){
+ if(!confirm("क्या आप इस चैट को Clear करना चाहते हैं?"))return;
+ chats[currentChat]=[];
+ renderMessages();
+}
+
+function deleteCurrent(){
+ if(!confirm("क्या आप इस चैट को Delete करना चाहते हैं?"))return;
+ chats[currentChat]=[];
+ renderMessages();
+}
+
+function clearAll(){
+ if(!confirm("क्या आप सभी चैट Clear करना चाहते हैं?"))return;
+ Object.keys(chats).forEach(k=>chats[k]=[]);
+ renderMessages();
+}
+
+function deleteAll(){
+ if(!confirm("क्या आप सभी चैट Delete करना चाहते हैं?"))return;
+ chats={};
+ renderMessages();
+}
+
+function openAdmin(){
+ if(role!=="admin"){
+  alert("केवल Admin इस पैनल को खोल सकता है।");
+  return;
+ }
+ document.getElementById("adminPanel").classList.remove("hidden");
+ updateAdminClock();
+}
+
+function closeAdmin(){
+ document.getElementById("adminPanel").classList.add("hidden");
+}
+
+function createCustomer(){
+ const name=document.getElementById("newName").value.trim();
+ const id=document.getElementById("newId").value.trim();
+ const prefix=document.getElementById("newPrefix").value.trim();
+
+ if(!name||!id||!prefix){
+  alert("सभी जानकारी भरें।");
+  return;
+ }
+
+ customers.push({name,id,prefix});
+ document.getElementById("createStatus").textContent=
+ "Preview में Customer जोड़ा गया: "+id;
+ document.getElementById("adminCustomers").textContent=
+ customers.map(c=>c.name+" ("+c.id+")").join("\n");
+}
+
+function updateAdminClock(){
+ const d=new Date();
+ const hh=String(d.getHours()).padStart(2,"0");
+ const mm=String(d.getMinutes()).padStart(2,"0");
+ const prefix="Z";
+ document.getElementById("timePassword").textContent=prefix+hh+mm;
+}
+
+setInterval(updateAdminClock,1000);
+
+// Preview refresh. Actual expiration will be enforced
+// separately on the customer side through Supabase.
+setInterval(()=>{
+ if(role==="customer"&&!document.getElementById("mainScreen").classList.contains("hidden")){
+  renderMessages();
+ }
+},1000);
+
+window.addEventListener("pageshow",()=>{
+ cancelReply();
+});
+
+window.addEventListener("pagehide",()=>{
+ // Release local media preview URLs.
+ mediaURLs.forEach(url=>URL.revokeObjectURL(url));
+ mediaURLs=[];
+});
+
+document.addEventListener("visibilitychange",()=>{
+ if(document.hidden){
+  // Real session lock must be enforced by the backend
+  // and re-authentication on return.
+ }
+});
+</script>
+</body>
+</html>

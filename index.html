@@ -656,7 +656,7 @@ function renderMessages() {
  const now = Date.now();
 
  const visible = role === "customer"
-  ? messages.filter(m => now - new Date(m.created_at).getTime() < 60000)
+  ? messages.filter(m => now - new Date(m.created_at).getTime() < 86400000)
   : messages;
 
  const wasNearBottom =

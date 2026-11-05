@@ -574,6 +574,9 @@ async function selectCustomer(id) {
  const customer = customers.find(c => c.id === id);
  if (!customer) return;
 
+ messages = [];
+ el("messages").innerHTML = '<div class="date-label">TODAY</div>';
+
  el("chatTitle").textContent = customer.display_name || customer.login_id;
  el("mainScreen").classList.add("mobile-chat");
  el("backBtn").classList.remove("hidden");
@@ -588,6 +591,7 @@ function backToList() {
  stopRefresh();
 }
 
+/* MESSAGE LOADING */
 async function loadMessages() {
  if (!currentUser) return;
 
@@ -641,19 +645,55 @@ function getMessagePreview(message) {
  return message.message_text || "Message";
 }
 
+/*
+  FIX:
+  अब हर 2.5 सेकंड में पूरी चैट दोबारा नहीं बनेगी।
+  पुराने Message और Photo अपनी जगह बने रहेंगे।
+  केवल नए Message जोड़े जाएंगे।
+*/
 function renderMessages() {
  const area = el("messages");
- area.innerHTML = '<div class="date-label">TODAY</div>';
-
  const now = Date.now();
 
  const visible = role === "customer"
   ? messages.filter(m => now - new Date(m.created_at).getTime() < 60000)
   : messages;
 
+ const wasNearBottom =
+  area.scrollHeight - area.scrollTop - area.clientHeight < 120;
+
+ // पहले से बने हुए Messages की सूची
+ const existing = new Map();
+
+ area.querySelectorAll(".msg[data-message-id]").forEach(node => {
+  existing.set(node.dataset.messageId, node);
+ });
+
+ const visibleIds = new Set(
+  visible.map(m => String(m.id))
+ );
+
+ // जो Message अब मौजूद नहीं है, केवल उसे हटाएं
+ existing.forEach((node, id) => {
+  if (!visibleIds.has(id)) {
+   node.remove();
+   existing.delete(id);
+  }
+ });
+
+ let addedNewMessage = false;
+
  visible.forEach(m => {
+  const messageId = String(m.id);
+
+  // पुराना Message पहले से मौजूद है तो उसे दोबारा न बनाएं
+  if (existing.has(messageId)) return;
+
+  addedNewMessage = true;
+
   const div = document.createElement("div");
   div.className = "msg " + (m.sender_role === role ? "mine" : "");
+  div.dataset.messageId = messageId;
 
   if (m.reply_to) {
    const original = messages.find(x => x.id === m.reply_to);
@@ -669,10 +709,13 @@ function renderMessages() {
    if (m.media_url) {
     const img = document.createElement("img");
     img.className = "msg-media";
-    img.src = m.media_url;
     img.alt = m.content_type === "gif" ? "GIF" : "Photo";
-    img.loading = "lazy";
+    img.loading = "eager";
+    img.decoding = "async";
     img.draggable = false;
+
+    img.src = m.media_url;
+
     div.appendChild(img);
    } else {
     const unavailable = document.createElement("p");
@@ -719,10 +762,14 @@ function renderMessages() {
 
   actions.appendChild(replyBtn);
   div.appendChild(actions);
+
   area.appendChild(div);
  });
 
- area.scrollTop = area.scrollHeight;
+ // केवल नया Message आने पर और User नीचे हो तभी Scroll करें
+ if (addedNewMessage && wasNearBottom) {
+  area.scrollTop = area.scrollHeight;
+ }
 }
 
 async function sendMessage() {

@@ -946,12 +946,60 @@ async function deleteCurrent() {
  }
 }
 
-function clearAll() {
- alert("All Chat Clear सुविधा अगले चरण में जोड़ी जाएगी।");
+async function clearAll() {
+ if (role !== "admin") {
+  alert("केवल Admin यह काम कर सकता है।");
+  return;
+ }
+
+ if (!confirm("क्या आप सभी Customers की पूरी Chat History और Media Clear करना चाहते हैं? Customer Accounts सुरक्षित रहेंगे।")) return;
+
+ try {
+  await callFunction("admin_clear_all_chats");
+
+  messages = [];
+  currentChat = null;
+  customers = [];
+
+  el("messages").innerHTML = '<div class="date-label">ALL CHATS CLEARED</div>';
+  el("chatTitle").textContent = "Customer चुनें";
+
+  await loadCustomers();
+
+  alert("सभी Customers की Chat History Clear हो गई।");
+
+ } catch (error) {
+  alert("All Chat Clear असफल: " + error.message);
+ }
 }
 
-function deleteAll() {
- alert("All Chat Delete सुविधा अगले चरण में जोड़ी जाएगी।");
+async function deleteAll() {
+ if (role !== "admin") {
+  alert("केवल Admin यह काम कर सकता है।");
+  return;
+ }
+
+ if (!confirm("चेतावनी: सभी Customers की Chat History, Media और Login Sessions स्थायी रूप से Delete हो जाएँगे। Customer Accounts सुरक्षित रहेंगे। क्या जारी रखें?")) return;
+
+ if (!confirm("क्या आप वास्तव में सभी Chats Delete करना चाहते हैं? यह वापस नहीं होगा।")) return;
+
+ try {
+  await callFunction("admin_delete_all_chats");
+
+  messages = [];
+  currentChat = null;
+  customers = [];
+
+  el("messages").innerHTML = '<div class="date-label">ALL CHATS DELETED</div>';
+  el("chatTitle").textContent = "Customer चुनें";
+
+  await loadCustomers();
+
+  alert("सभी Customers की Chat History और Login Sessions Delete हो गईं।");
+
+ } catch (error) {
+  alert("All Chat Delete असफल: " + error.message);
+ }
 }
 
 function openAdmin() {

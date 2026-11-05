@@ -15,6 +15,1106 @@ button,input,textarea{font:inherit}
 button{cursor:pointer;border:0}
 .hidden{display:none!important}
 #app{min-height:100vh}
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#075e54">
+<title>SN Private Chat</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#e9edef;color:#202c33;min-height:100vh}
+button,input,textarea{font:inherit}
+button{cursor:pointer;border:0}
+.hidden{display:none!important}
+#app{min-height:100vh}
+
+/* LOGIN */
+.login-screen{
+ min-height:100vh;display:flex;align-items:center;justify-content:center;
+ padding:20px;background:linear-gradient(140deg,#075e54,#128c7e,#25a69a)
+}
+.login-card{
+ width:100%;max-width:390px;background:white;border-radius:18px;
+ padding:30px 25px;box-shadow:0 15px 50px #003b3650
+}
+.logo{
+ width:65px;height:65px;border-radius:50%;background:#075e54;color:white;
+ display:flex;align-items:center;justify-content:center;font-size:27px;
+ font-weight:bold;margin:0 auto 15px
+}
+.login-card h2{text-align:center;color:#075e54}
+.sub{text-align:center;color:#667781;font-size:13px;margin:9px 0 25px}
+.tabs{display:flex;gap:8px;margin-bottom:20px}
+.tabs button{flex:1;padding:12px;border-radius:8px;background:#edf1f2;color:#455a64;font-weight:bold}
+.tabs button.active{background:#075e54;color:white}
+.field{margin-bottom:15px}
+.field label{display:block;font-size:13px;margin-bottom:7px;font-weight:bold}
+.field input{
+ width:100%;padding:13px;border:1px solid #d5dfe2;border-radius:8px;outline:none
+}
+.field input:focus{border-color:#128c7e}
+.primary{width:100%;padding:14px;background:#075e54;color:white;border-radius:8px;font-weight:bold}
+.primary:disabled{opacity:.6;cursor:wait}
+.note{text-align:center;font-size:11px;color:#86949a;margin-top:16px}
+
+/* APP */
+.app-screen{height:100vh;display:flex;overflow:hidden}
+.sidebar{
+ width:340px;max-width:40%;background:white;border-right:1px solid #d9e0e3;
+ display:flex;flex-direction:column
+}
+.side-head{
+ padding:16px;background:#075e54;color:white;
+ display:flex;align-items:center;justify-content:space-between
+}
+.side-head h3{font-size:18px}
+.side-head button{background:transparent;color:white;font-size:20px}
+.profile{
+ padding:18px;background:#f5f7f8;display:flex;align-items:center;gap:12px;
+ border-bottom:1px solid #e5e9eb
+}
+.avatar{
+ width:43px;height:43px;border-radius:50%;background:#128c7e;color:white;
+ display:flex;align-items:center;justify-content:center;font-weight:bold;
+ font-size:17px;flex-shrink:0
+}
+.profile small{color:#667781}
+.customer-list{overflow-y:auto;flex:1}
+.customer{
+ padding:15px;display:flex;gap:12px;align-items:center;
+ border-bottom:1px solid #edf0f1;cursor:pointer
+}
+.customer:hover,.customer.selected{background:#e8f5f2}
+.customer strong{font-size:14px}
+.customer small{display:block;color:#667781;margin-top:5px}
+.side-actions{padding:12px;border-top:1px solid #ddd}
+.side-actions button{
+ width:100%;padding:11px;margin:4px 0;border-radius:7px;
+ background:#e7f3f1;color:#075e54;font-weight:bold
+}
+
+/* CHAT */
+.chat{flex:1;min-width:0;display:flex;flex-direction:column;background:#efeae2}
+.chat-head{
+ height:68px;background:#075e54;color:white;display:flex;
+ align-items:center;padding:10px 15px;gap:12px
+}
+.chat-head .avatar{background:#ffffff30}
+.chat-info{flex:1}
+.chat-info small{display:block;color:#d0e7e3;margin-top:4px}
+.chat-head button{background:transparent;color:white;font-size:20px;padding:8px}
+.messages{
+ flex:1;overflow-y:auto;padding:20px 5%;display:flex;flex-direction:column;
+ gap:9px;background-color:#efeae2;
+ background-image:radial-gradient(#d8d1c7 0.5px,transparent 0.5px);
+ background-size:18px 18px
+}
+.date-label{
+ align-self:center;background:#ffffffd9;padding:7px 13px;border-radius:8px;
+ font-size:11px;color:#667781
+}
+.msg{
+ max-width:78%;min-width:90px;padding:9px 11px 7px;border-radius:9px;
+ background:white;align-self:flex-start;box-shadow:0 1px 1px #0001;
+ position:relative;overflow-wrap:anywhere
+}
+.msg.mine{align-self:flex-end;background:#d9fdd3}
+.msg p{font-size:14px;white-space:pre-wrap;line-height:1.45}
+.msg .time{display:block;text-align:right;font-size:10px;color:#738078;margin-top:5px}
+.reply-preview{
+ border-left:3px solid #128c7e;background:#00000009;padding:7px;
+ margin-bottom:7px;border-radius:4px;font-size:12px;color:#526b65
+}
+.msg-actions{display:flex;gap:12px;margin-top:6px;justify-content:flex-end}
+.msg-actions button{font-size:11px;background:transparent;color:#128c7e}
+.input-area{
+ background:#f0f2f5;padding:12px;display:flex;align-items:center;gap:8px
+}
+.input-area button{background:transparent;color:#54656e;font-size:23px;padding:5px}
+.input-area textarea{
+ flex:1;resize:none;max-height:100px;min-height:43px;padding:12px;
+ border:0;border-radius:22px;outline:none
+}
+.send-btn{
+ background:#075e54!important;color:white!important;width:43px;height:43px;
+ border-radius:50%;font-size:18px!important
+}
+.reply-bar{
+ background:#e0f2ed;padding:9px 15px;display:flex;
+ justify-content:space-between;font-size:12px;color:#075e54
+}
+.reply-bar button{background:transparent;color:#075e54}
+
+/* MEDIA */
+.msg-media{
+ display:block;max-width:100%;width:auto;max-height:320px;
+ object-fit:contain;border-radius:7px;margin:2px 0
+}
+.msg video{
+ width:100%;max-width:380px;max-height:320px;background:#000;
+ border-radius:7px
+}
+.media-status{
+ font-size:12px;color:#075e54;text-align:center;
+ padding:5px 10px;background:#e0f2ed
+}
+
+/* ADMIN */
+.admin-panel{
+ position:absolute;inset:0;background:#f3f6f7;z-index:5;overflow-y:auto;padding:20px
+}
+.admin-top{
+ display:flex;justify-content:space-between;align-items:center;
+ gap:10px;margin-bottom:20px
+}
+.admin-top h2{color:#075e54}
+.admin-top button{background:#075e54;color:white;padding:10px 14px;border-radius:7px}
+.admin-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;max-width:900px}
+.admin-box{
+ background:white;border-radius:12px;padding:18px;
+ box-shadow:0 2px 9px #0000000b
+}
+.admin-box h3{font-size:16px;color:#075e54;margin-bottom:15px}
+.admin-box input{
+ width:100%;padding:11px;margin:7px 0;border:1px solid #d8e0e3;border-radius:7px
+}
+.admin-box button{padding:11px;background:#075e54;color:white;border-radius:7px;margin-top:7px}
+.danger{background:#b42318!important}
+.warning{
+ font-size:12px;color:#986000;background:#fff6dc;
+ padding:12px;border-radius:8px;margin-bottom:15px
+}
+
+/* MOBILE */
+@media(max-width:650px){
+ .sidebar{width:100%;max-width:100%}
+ .chat{width:100%}
+ .app-screen.mobile-chat .sidebar{display:none}
+ .app-screen:not(.mobile-chat) .chat{display:none}
+ .messages{padding:15px 10px}
+ .msg{max-width:88%}
+ .admin-grid{grid-template-columns:1fr}
+ .admin-panel{padding:14px}
+ .msg video{max-width:100%}
+}
+</style>
+</head>
+
+<body>
+<div id="app">
+
+<!-- LOGIN -->
+<section class="login-screen" id="loginScreen">
+ <div class="login-card">
+  <div class="logo">SN</div>
+  <h2>SN Private Chat</h2>
+  <div class="sub">Secure Customer Communication</div>
+
+  <div class="tabs">
+   <button class="active" id="customerTab" onclick="setRole('customer')">Customer</button>
+   <button id="adminTab" onclick="setRole('admin')">Admin</button>
+  </div>
+
+  <div class="field">
+   <label>Customer ID</label>
+   <input id="loginId" placeholder="अपनी ID डालें" autocomplete="username">
+  </div>
+
+  <div class="field">
+   <label>Password</label>
+   <input id="loginPassword" type="password" placeholder="अपना Password डालें" autocomplete="current-password">
+  </div>
+
+  <button class="primary" onclick="login()">START</button>
+  <div class="note">System</div>
+ </div>
+</section>
+
+<!-- MAIN APP -->
+<section class="app-screen hidden" id="mainScreen">
+
+ <aside class="sidebar">
+  <div class="side-head">
+   <h3>SN Private Chat</h3>
+   <button onclick="logout()">↪</button>
+  </div>
+
+  <div class="profile">
+   <div class="avatar" id="profileAvatar">SN</div>
+   <div>
+    <strong id="profileName">Customer</strong>
+    <small id="profileRole">Private Chat</small>
+   </div>
+  </div>
+
+  <div class="customer-list" id="customerList">
+   <div class="customer selected">
+    <div class="avatar">SN</div>
+    <div><strong>SN Admin</strong><small>Private conversation</small></div>
+   </div>
+  </div>
+
+  <div class="side-actions hidden" id="adminSideActions">
+   <button onclick="openAdmin()">⚙ Admin Panel</button>
+   <button onclick="clearCurrent()">Clear Current Chat</button>
+  </div>
+ </aside>
+
+ <main class="chat">
+  <header class="chat-head">
+   <button class="hidden" id="backBtn" onclick="backToList()">‹</button>
+   <div class="avatar">SN</div>
+   <div class="chat-info">
+    <strong id="chatTitle">SN Admin</strong>
+    <small>Private Conversation</small>
+   </div>
+   <button onclick="clearCurrent()">⌫</button>
+   <button onclick="logout()">⋮</button>
+  </header>
+
+  <div class="messages" id="messages">
+   <div class="date-label">TODAY</div>
+  </div>
+
+  <div class="reply-bar hidden" id="replyBar">
+   <span id="replyText">Reply</span>
+   <button onclick="cancelReply()">✕</button>
+  </div>
+
+  <div class="input-area">
+   <button onclick="toggleEmoji()" title="Emoji">☺</button>
+   <button onclick="document.getElementById('mediaInput').click()" title="Photo, Video और GIF">＋</button>
+   <input type="file" id="mediaInput"
+    accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"
+    hidden onchange="sendMedia(event)">
+   <textarea id="messageInput" rows="1" placeholder="Type a message..." onkeydown="handleEnter(event)"></textarea>
+   <button class="send-btn" onclick="sendMessage()">➤</button>
+  </div>
+
+  <div id="emojiPanel" class="hidden" style="padding:12px;background:white;display:flex;flex-wrap:wrap;gap:12px">
+   <button onclick="addEmoji('😀')">😀</button>
+   <button onclick="addEmoji('😂')">😂</button>
+   <button onclick="addEmoji('❤️')">❤️</button>
+   <button onclick="addEmoji('👍')">👍</button>
+   <button onclick="addEmoji('🙏')">🙏</button>
+   <button onclick="addEmoji('😍')">😍</button>
+   <button onclick="addEmoji('🔥')">🔥</button>
+   <button onclick="addEmoji('😊')">😊</button>
+   <button onclick="addEmoji('🎉')">🎉</button>
+  </div>
+ </main>
+
+ <!-- ADMIN PANEL -->
+ <section class="admin-panel hidden" id="adminPanel">
+  <div class="admin-top">
+   <h2>SN Admin Panel</h2>
+   <button onclick="closeAdmin()">← Back to Chat</button>
+  </div>
+
+  <div class="warning">
+   Photo, Video और GIF Upload सक्रिय किए जा रहे हैं। अधिकतम फ़ाइल साइज़ 50 MB है।
+  </div>
+
+  <div class="admin-grid">
+
+   <div class="admin-box">
+    <h3>＋ Customer Registration</h3>
+    <input id="newName" placeholder="Customer Name">
+    <input id="newId" placeholder="Create Customer ID">
+    <input id="newPrefix" placeholder="Password Prefix (Example: Z)" maxlength="1">
+    <button onclick="createCustomer()">Create Customer</button>
+    <p id="createStatus" style="font-size:12px;margin-top:10px"></p>
+   </div>
+
+   <div class="admin-box">
+    <h3>⏱ Time Password Format</h3>
+    <p style="font-size:13px">Password का प्रारूप:</p>
+    <div style="font-size:25px;font-weight:bold;color:#075e54;margin:15px 0" id="timePassword">ZHHMM</div>
+    <p style="font-size:12px;color:#667781">Customer को Prefix + भारत का वर्तमान सर्वर समय (HHMM) देना होगा।</p>
+   </div>
+
+   <div class="admin-box">
+    <h3>Customer List</h3>
+    <div id="adminCustomers">अभी कोई Customer उपलब्ध नहीं है।</div>
+   </div>
+
+   <div class="admin-box">
+    <h3>Chat Management</h3>
+    <button class="danger" onclick="deleteCurrent()">Delete Current Chat</button><br>
+    <button class="danger" onclick="clearAll()">All Chat Clear</button><br>
+    <button class="danger" onclick="deleteAll()">All Chat Delete</button>
+    <p style="font-size:12px;margin-top:10px">All Chat Clear और All Chat Delete अभी सक्रिय नहीं हैं।</p>
+   </div>
+
+  </div>
+ </section>
+
+</section>
+</div>
+
+<script>
+const SUPABASE_URL = "https://nydjcnjchitymhvpfwjx.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_1z-u2t6-4Ziaqm-cZ6KW7A_NYcYLDkT";
+const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+const FUNCTION_NAME = "z-private-chat";
+
+const MAX_MEDIA_SIZE = 50 * 1024 * 1024;
+const ALLOWED_MEDIA_TYPES = [
+ "image/jpeg",
+ "image/png",
+ "image/webp",
+ "image/gif",
+ "video/mp4",
+ "video/webm"
+];
+
+let role = "customer";
+let currentUser = null;
+let customerToken = null;
+let replyMessage = null;
+let customers = [];
+let currentChat = null;
+let messages = [];
+let refreshTimer = null;
+let lockOnReturn = false;
+
+function el(id) {
+ return document.getElementById(id);
+}
+
+function setRole(r) {
+ role = r;
+ el("customerTab").classList.toggle("active", r === "customer");
+ el("adminTab").classList.toggle("active", r === "admin");
+ el("loginId").placeholder = r === "admin" ? "Admin Email डालें" : "Customer ID डालें";
+ el("loginPassword").autocomplete = r === "admin" ? "current-password" : "off";
+
+ const labels = document.querySelectorAll(".field label");
+ if (labels[0]) labels[0].textContent = r === "admin" ? "Admin Email" : "Customer ID";
+ if (labels[1]) labels[1].textContent = "Password";
+}
+
+async function callFunction(action, extra = {}) {
+ const { data, error } = await sbClient.functions.invoke(FUNCTION_NAME, {
+  body: {
+   action,
+   token: customerToken,
+   ...extra
+  }
+ });
+
+ if (error) {
+  let detail = error.message || "Supabase Function error";
+
+  try {
+   if (error.context && typeof error.context.json === "function") {
+    const body = await error.context.json();
+    detail = body.error || body.message || detail;
+   }
+  } catch (_) {}
+
+  throw new Error(detail);
+ }
+
+ if (data && data.error) {
+  throw new Error(data.error);
+ }
+
+ return data;
+}
+
+function showLogin() {
+ el("mainScreen").classList.add("hidden");
+ el("loginScreen").classList.remove("hidden");
+ el("adminPanel").classList.add("hidden");
+ el("loginPassword").value = "";
+}
+
+async function login() {
+ const id = el("loginId").value.trim();
+ const password = el("loginPassword").value.trim();
+
+ if (!id || !password) {
+  alert("कृपया ID/Email और Password भरें।");
+  return;
+ }
+
+ const button = document.querySelector(".login-card .primary");
+ button.disabled = true;
+ button.textContent = "PLEASE WAIT...";
+
+ try {
+  if (role === "admin") {
+   const { data, error } = await sbClient.auth.signInWithPassword({
+    email: id,
+    password
+   });
+
+   if (error) throw error;
+   if (!data.session) throw new Error("Admin Login session नहीं मिली।");
+
+   currentUser = { role: "admin", name: "SN Admin" };
+   customerToken = null;
+   currentChat = null;
+
+   await loadCustomers();
+
+   el("profileName").textContent = "SN Admin";
+   el("profileRole").textContent = "Administrator";
+   el("profileAvatar").textContent = "SN";
+   el("adminSideActions").classList.remove("hidden");
+   el("customerList").classList.remove("hidden");
+   el("chatTitle").textContent = "Customer चुनें";
+   el("messages").innerHTML = '<div class="date-label">CUSTOMER चुनें</div>';
+
+   initializeChat();
+
+  } else {
+   const data = await callFunction("customer_login", {
+    login_id: id,
+    password
+   });
+
+   customerToken = data.token;
+   currentUser = { role: "customer", name: id };
+   currentChat = "admin";
+
+   el("profileName").textContent = id;
+   el("profileRole").textContent = "Customer";
+   el("profileAvatar").textContent = id.slice(0, 2).toUpperCase();
+   el("adminSideActions").classList.add("hidden");
+   el("customerList").classList.add("hidden");
+   el("chatTitle").textContent = "SN Admin";
+
+   initializeChat();
+   await loadMessages();
+   startRefresh();
+  }
+
+ } catch (error) {
+  console.error(error);
+  alert("Login असफल: " + error.message);
+
+  if (role === "admin") {
+   await sbClient.auth.signOut();
+  }
+
+  customerToken = null;
+
+ } finally {
+  button.disabled = false;
+  button.textContent = "START CHAT";
+ }
+}
+
+function initializeChat() {
+ el("loginScreen").classList.add("hidden");
+ el("mainScreen").classList.remove("hidden");
+ el("adminPanel").classList.add("hidden");
+ el("mainScreen").classList.remove("mobile-chat");
+
+ if (role === "customer") {
+  el("mainScreen").classList.add("mobile-chat");
+ }
+}
+
+async function logout() {
+ if (!confirm("क्या आप चैट से बाहर निकलना चाहते हैं?")) return;
+
+ stopRefresh();
+
+ if (role === "customer" && customerToken) {
+  try {
+   await callFunction("customer_logout");
+  } catch (e) {
+   console.warn(e);
+  }
+ }
+
+ customerToken = null;
+ currentUser = null;
+ messages = [];
+ replyMessage = null;
+
+ await sbClient.auth.signOut();
+ showLogin();
+}
+
+async function loadCustomers() {
+ const result = await callFunction("admin_list_customers");
+ customers = result.customers || [];
+
+ renderCustomers();
+ renderAdminCustomers();
+}
+
+function renderCustomers() {
+ const list = el("customerList");
+ list.innerHTML = "";
+
+ customers.forEach(customer => {
+  const item = document.createElement("div");
+  item.className = "customer" + (currentChat === customer.id ? " selected" : "");
+
+  const avatar = document.createElement("div");
+  avatar.className = "avatar";
+  avatar.textContent = (customer.display_name || "C").slice(0, 1).toUpperCase();
+
+  const info = document.createElement("div");
+
+  const name = document.createElement("strong");
+  name.textContent = customer.display_name || customer.login_id;
+
+  const small = document.createElement("small");
+  small.textContent = customer.login_id + (customer.is_active ? "" : " • Inactive");
+
+  info.append(name, small);
+  item.append(avatar, info);
+
+  item.onclick = () => selectCustomer(customer.id);
+  list.appendChild(item);
+ });
+
+ if (!customers.length) {
+  list.textContent = "अभी कोई Customer नहीं है।";
+ }
+}
+
+async function selectCustomer(id) {
+ currentChat = id;
+
+ const customer = customers.find(c => c.id === id);
+ if (!customer) return;
+
+ messages = [];
+ el("messages").innerHTML = '<div class="date-label">TODAY</div>';
+
+ el("chatTitle").textContent = customer.display_name || customer.login_id;
+ el("mainScreen").classList.add("mobile-chat");
+ el("backBtn").classList.remove("hidden");
+
+ renderCustomers();
+ await loadMessages();
+ startRefresh();
+}
+
+function backToList() {
+ el("mainScreen").classList.remove("mobile-chat");
+ stopRefresh();
+}
+
+/* MESSAGE LOADING */
+async function loadMessages() {
+ if (!currentUser) return;
+
+ try {
+  let result;
+
+  if (role === "admin") {
+   if (!currentChat) return;
+
+   result = await callFunction("admin_list_messages", {
+    customer_id: currentChat
+   });
+
+  } else {
+   result = await callFunction("customer_list_messages");
+  }
+
+  messages = result.messages || [];
+  renderMessages();
+
+ } catch (error) {
+  console.error(error);
+
+  if (error.message === "SESSION_EXPIRED" ||
+      error.message === "LOGIN_REQUIRED") {
+
+   customerToken = null;
+   stopRefresh();
+
+   alert("आपका Login समाप्त हो गया है। कृपया फिर से Login करें।");
+   showLogin();
+  }
+ }
+}
+
+function startRefresh() {
+ stopRefresh();
+ refreshTimer = setInterval(loadMessages, 2500);
+}
+
+function stopRefresh() {
+ if (refreshTimer) clearInterval(refreshTimer);
+ refreshTimer = null;
+}
+
+function getMessagePreview(message) {
+ if (!message) return "पुराना संदेश";
+ if (message.content_type === "image") return "📷 Photo";
+ if (message.content_type === "gif") return "GIF";
+ if (message.content_type === "video") return "🎥 Video";
+ return message.message_text || "Message";
+}
+
+/*
+  FIX:
+  अब हर 2.5 सेकंड में पूरी चैट दोबारा नहीं बनेगी।
+  पुराने Message और Photo अपनी जगह बने रहेंगे।
+  केवल नए Message जोड़े जाएंगे।
+*/
+function renderMessages() {
+ const area = el("messages");
+ const now = Date.now();
+
+ const visible = role === "customer"
+  ? messages.filter(m => now - new Date(m.created_at).getTime() < 86400000)
+  : messages;
+
+ const wasNearBottom =
+  area.scrollHeight - area.scrollTop - area.clientHeight < 120;
+
+ // पहले से बने हुए Messages की सूची
+ const existing = new Map();
+
+ area.querySelectorAll(".msg[data-message-id]").forEach(node => {
+  existing.set(node.dataset.messageId, node);
+ });
+
+ const visibleIds = new Set(
+  visible.map(m => String(m.id))
+ );
+
+ // जो Message अब मौजूद नहीं है, केवल उसे हटाएं
+ existing.forEach((node, id) => {
+  if (!visibleIds.has(id)) {
+   node.remove();
+   existing.delete(id);
+  }
+ });
+
+ let addedNewMessage = false;
+
+ visible.forEach(m => {
+  const messageId = String(m.id);
+
+  // पुराना Message पहले से मौजूद है तो उसे दोबारा न बनाएं
+  if (existing.has(messageId)) return;
+
+  addedNewMessage = true;
+
+  const div = document.createElement("div");
+  div.className = "msg " + (m.sender_role === role ? "mine" : "");
+  div.dataset.messageId = messageId;
+
+  if (m.reply_to) {
+   const original = messages.find(x => x.id === m.reply_to);
+
+   const rp = document.createElement("div");
+   rp.className = "reply-preview";
+   rp.textContent = "↪ " + getMessagePreview(original);
+
+   div.appendChild(rp);
+  }
+
+  if (m.content_type === "image" || m.content_type === "gif") {
+   if (m.media_url) {
+    const img = document.createElement("img");
+    img.className = "msg-media";
+    img.alt = m.content_type === "gif" ? "GIF" : "Photo";
+    img.loading = "eager";
+    img.decoding = "async";
+    img.draggable = false;
+
+    img.src = m.media_url;
+
+    div.appendChild(img);
+   } else {
+    const unavailable = document.createElement("p");
+    unavailable.textContent = "Photo उपलब्ध नहीं है।";
+    div.appendChild(unavailable);
+   }
+
+  } else if (m.content_type === "video") {
+   if (m.media_url) {
+    const video = document.createElement("video");
+    video.src = m.media_url;
+    video.controls = true;
+    video.preload = "metadata";
+    video.setAttribute("controlsList", "nodownload");
+    video.setAttribute("disablePictureInPicture", "");
+    div.appendChild(video);
+   } else {
+    const unavailable = document.createElement("p");
+    unavailable.textContent = "Video उपलब्ध नहीं है।";
+    div.appendChild(unavailable);
+   }
+
+  } else {
+   const p = document.createElement("p");
+   p.textContent = m.message_text || "";
+   div.appendChild(p);
+  }
+
+  const time = document.createElement("span");
+  time.className = "time";
+  time.textContent = new Date(m.created_at).toLocaleTimeString("en-IN", {
+   hour: "2-digit",
+   minute: "2-digit"
+  });
+
+  div.appendChild(time);
+
+  const actions = document.createElement("div");
+  actions.className = "msg-actions";
+
+  const replyBtn = document.createElement("button");
+  replyBtn.textContent = "Reply";
+  replyBtn.onclick = () => startReply(m.id);
+
+  actions.appendChild(replyBtn);
+  div.appendChild(actions);
+
+  area.appendChild(div);
+ });
+
+ // केवल नया Message आने पर और User नीचे हो तभी Scroll करें
+ if (addedNewMessage && wasNearBottom) {
+  area.scrollTop = area.scrollHeight;
+ }
+}
+
+async function sendMessage() {
+ const input = el("messageInput");
+ const value = input.value.trim();
+
+ if (!value) return;
+
+ if (role === "admin" && !currentChat) {
+  alert("पहले Customer चुनिए।");
+  return;
+ }
+
+ try {
+  await callFunction("send_text", {
+   message: value,
+   customer_id: role === "admin" ? currentChat : undefined,
+   reply_to: replyMessage
+  });
+
+  input.value = "";
+  cancelReply();
+  await loadMessages();
+
+ } catch (error) {
+  alert("Message नहीं भेजा गया: " + error.message);
+ }
+
+}
+
+async function sendMedia(event) {
+ const input = event.target;
+ const file = input.files && input.files[0];
+
+ if (!file) return;
+
+ if (role === "admin" && !currentChat) {
+  input.value = "";
+  alert("पहले Customer चुनिए।");
+  return;
+ }
+
+ if (!ALLOWED_MEDIA_TYPES.includes(file.type)) {
+  input.value = "";
+  alert("केवल JPG, PNG, WEBP, GIF, MP4 और WEBM फ़ाइल भेज सकते हैं।");
+  return;
+ }
+
+ if (file.size <= 0 || file.size > MAX_MEDIA_SIZE) {
+  input.value = "";
+  alert("फ़ाइल का साइज़ 50 MB से कम होना चाहिए।");
+  return;
+ }
+
+ const mediaButton = document.querySelector('.input-area button[title="Photo, Video और GIF"]');
+ const originalText = mediaButton.textContent;
+
+ mediaButton.disabled = true;
+ mediaButton.textContent = "…";
+
+ try {
+  const uploadInfo = await callFunction("media_upload_url", {
+   customer_id: role === "admin" ? currentChat : undefined,
+   mime_type: file.type,
+   file_size: file.size
+  });
+
+  if (!uploadInfo || !uploadInfo.path || !uploadInfo.token) {
+   throw new Error("Upload URL नहीं मिला।");
+  }
+
+  const { data: uploaded, error: uploadError } = await sbClient.storage
+   .from("chat-media")
+   .uploadToSignedUrl(
+    uploadInfo.path,
+    uploadInfo.token,
+    file,
+    { contentType: file.type, upsert: false }
+   );
+
+  if (uploadError) throw uploadError;
+
+  await callFunction("send_media", {
+   customer_id: role === "admin" ? currentChat : undefined,
+   storage_path: uploaded.path || uploadInfo.path,
+   mime_type: file.type,
+   file_size: file.size,
+   reply_to: replyMessage
+  });
+
+  cancelReply();
+  await loadMessages();
+
+ } catch (error) {
+  console.error("Media upload error:", error);
+  alert("Media भेजने में समस्या हुई: " + error.message);
+
+ } finally {
+  mediaButton.disabled = false;
+  mediaButton.textContent = originalText;
+  input.value = "";
+ }
+}
+
+function startReply(id) {
+ const m = messages.find(x => x.id === id);
+ if (!m) return;
+
+ replyMessage = id;
+
+ el("replyText").textContent = "Reply: " + getMessagePreview(m);
+ el("replyBar").classList.remove("hidden");
+ el("messageInput").focus();
+}
+
+function cancelReply() {
+ replyMessage = null;
+ el("replyBar").classList.add("hidden");
+}
+
+function handleEnter(event) {
+ if (event.key === "Enter" && !event.shiftKey) {
+  event.preventDefault();
+  sendMessage();
+ }
+}
+
+function toggleEmoji() {
+ el("emojiPanel").classList.toggle("hidden");
+}
+
+function addEmoji(emoji) {
+ el("messageInput").value += emoji;
+ el("messageInput").focus();
+}
+
+async function clearCurrent() {
+ if (role !== "customer") {
+  alert("Admin के लिए Clear विकल्प अभी सक्रिय नहीं है। Admin Chat Delete इस्तेमाल कर सकता है।");
+  return;
+ }
+
+ if (!confirm("यह चैट Customer की स्क्रीन से Clear होगी। Admin की History सुरक्षित रहेगी।")) return;
+
+ try {
+  await callFunction("customer_clear_chat");
+  messages = [];
+  renderMessages();
+
+ } catch (error) {
+  alert("Chat Clear नहीं हुई: " + error.message);
+ }
+}
+
+async function deleteCurrent() {
+ if (role !== "admin" || !currentChat) {
+  alert("पहले Admin में Customer चुनिए।");
+  return;
+ }
+
+ if (!confirm("इस Customer की पूरी Chat History और Sessions स्थायी रूप से Delete होंगे। जारी रखें?")) return;
+
+ try {
+  await callFunction("admin_delete_chat", {
+   customer_id: currentChat
+  });
+
+  messages = [];
+  renderMessages();
+  alert("Customer Chat Delete हो गई।");
+
+ } catch (error) {
+  alert("Delete असफल: " + error.message);
+ }
+}
+
+async function clearAll() {
+ if (role !== "admin") {
+  alert("केवल Admin यह काम कर सकता है।");
+  return;
+ }
+
+ if (!confirm("क्या आप सभी Customers की पूरी Chat History और Media Clear करना चाहते हैं? Customer Accounts सुरक्षित रहेंगे।")) return;
+
+ try {
+  await callFunction("admin_clear_all_chats");
+
+  messages = [];
+  currentChat = null;
+  customers = [];
+
+  el("messages").innerHTML = '<div class="date-label">ALL CHATS CLEARED</div>';
+  el("chatTitle").textContent = "Customer चुनें";
+
+  await loadCustomers();
+
+  alert("सभी Customers की Chat History Clear हो गई।");
+
+ } catch (error) {
+  alert("All Chat Clear असफल: " + error.message);
+ }
+}
+
+async function deleteAll() {
+ if (role !== "admin") {
+  alert("केवल Admin यह काम कर सकता है।");
+  return;
+ }
+
+ if (!confirm("चेतावनी: सभी Customers की Chat History, Media और Login Sessions स्थायी रूप से Delete हो जाएँगे। Customer Accounts सुरक्षित रहेंगे। क्या जारी रखें?")) return;
+
+ if (!confirm("क्या आप वास्तव में सभी Chats Delete करना चाहते हैं? यह वापस नहीं होगा।")) return;
+
+ try {
+  await callFunction("admin_delete_all_chats");
+
+  messages = [];
+  currentChat = null;
+  customers = [];
+
+  el("messages").innerHTML = '<div class="date-label">ALL CHATS DELETED</div>';
+  el("chatTitle").textContent = "Customer चुनें";
+
+  await loadCustomers();
+
+  alert("सभी Customers की Chat History और Login Sessions Delete हो गईं।");
+
+ } catch (error) {
+  alert("All Chat Delete असफल: " + error.message);
+ }
+}
+
+function openAdmin() {
+ if (role !== "admin") {
+  alert("केवल Admin इस पैनल को खोल सकता है।");
+  return;
+ }
+
+ el("adminPanel").classList.remove("hidden");
+ renderAdminCustomers();
+}
+
+function closeAdmin() {
+ el("adminPanel").classList.add("hidden");
+}
+
+async function createCustomer() {
+ const name = el("newName").value.trim();
+ const id = el("newId").value.trim();
+ const prefix = el("newPrefix").value.trim();
+
+ if (!name || !id || !/^[A-Za-z]$/.test(prefix)) {
+  alert("नाम, Customer ID और एक अक्षर का Prefix (जैसे Z) भरें।");
+  return;
+ }
+
+ try {
+  const result = await callFunction("admin_create_customer", {
+   display_name: name,
+   login_id: id,
+   password_prefix: prefix
+  });
+
+  el("createStatus").textContent =
+   "Customer सफलतापूर्वक बन गया: " + result.customer.login_id;
+
+  el("newName").value = "";
+  el("newId").value = "";
+  el("newPrefix").value = "";
+
+  await loadCustomers();
+
+ } catch (error) {
+  alert("Customer नहीं बना: " + error.message);
+ }
+}
+
+function renderAdminCustomers() {
+ const box = el("adminCustomers");
+ box.innerHTML = "";
+
+ if (!customers.length) {
+  box.textContent = "अभी कोई Customer उपलब्ध नहीं है।";
+  return;
+ }
+
+ customers.forEach(c => {
+  const row = document.createElement("div");
+  row.style.cssText = "padding:8px 0;border-bottom:1px solid #eee;font-size:13px";
+  row.textContent =
+   `${c.display_name} (${c.login_id}) — ${c.is_active ? "Active" : "Inactive"}`;
+
+  box.appendChild(row);
+ });
+}
+
+function updateAdminClock() {
+ el("timePassword").textContent =
+  (el("newPrefix").value.trim() || "Z") + "HHMM";
+}
+
+setInterval(updateAdminClock, 1000);
+
+window.addEventListener("pagehide", () => {
+ if (role === "customer") {
+  customerToken = null;
+  stopRefresh();
+ }
+});
+
+document.addEventListener("visibilitychange", () => {
+ if (document.hidden && role === "customer" && customerToken) {
+  customerToken = null;
+  stopRefresh();
+  currentUser = null;
+  messages = [];
+  lockOnReturn = true;
+
+ } else if (!document.hidden && lockOnReturn) {
+  showLogin();
+  lockOnReturn = false;
+ }
+});
+
+setRole("customer");
+</script>
+</body>
+</html>
+
 
 /* LOGIN */
 .login-screen{

@@ -195,7 +195,7 @@ button{cursor:pointer;border:0}
 <section class="login-screen" id="loginScreen">
  <div class="login-card">
   <div class="logo">z</div>
-  <h2>z Private Chat</h2>
+  <h2>SN Private Chat</h2>
   <div class="sub">Secure Customer Communication</div>
 
   <div class="tabs">
@@ -223,12 +223,12 @@ button{cursor:pointer;border:0}
 
  <aside class="sidebar">
   <div class="side-head">
-   <h3>z Private Chat</h3>
+   <h3>SN Private Chat</h3>
    <button onclick="logout()">↪</button>
   </div>
 
   <div class="profile">
-   <div class="avatar" id="profileAvatar">z</div>
+   <div class="avatar" id="profileAvatar">SN</div>
    <div>
     <strong id="profileName">Customer</strong>
     <small id="profileRole">Private Chat</small>
@@ -237,8 +237,8 @@ button{cursor:pointer;border:0}
 
   <div class="customer-list" id="customerList">
    <div class="customer selected">
-    <div class="avatar">z</div>
-    <div><strong>z Admin</strong><small>Private conversation</small></div>
+    <div class="avatar">SN</div>
+    <div><strong>SN Admin</strong><small>Private conversation</small></div>
    </div>
   </div>
 
@@ -251,9 +251,9 @@ button{cursor:pointer;border:0}
  <main class="chat">
   <header class="chat-head">
    <button class="hidden" id="backBtn" onclick="backToList()">‹</button>
-   <div class="avatar">z</div>
+   <div class="avatar">SN</div>
    <div class="chat-info">
-    <strong id="chatTitle">z Admin</strong>
+    <strong id="chatTitle">SN Admin</strong>
     <small>Private Conversation</small>
    </div>
    <button onclick="clearCurrent()">⌫</button>
@@ -295,7 +295,7 @@ button{cursor:pointer;border:0}
  <!-- ADMIN PANEL -->
  <section class="admin-panel hidden" id="adminPanel">
   <div class="admin-top">
-   <h2>z Admin Panel</h2>
+   <h2>SN Admin Panel</h2>
    <button onclick="closeAdmin()">← Back to Chat</button>
   </div>
 
@@ -441,15 +441,15 @@ async function login() {
    if (error) throw error;
    if (!data.session) throw new Error("Admin Login session नहीं मिली।");
 
-   currentUser = { role: "admin", name: "z Admin" };
+   currentUser = { role: "admin", name: "SN Admin" };
    customerToken = null;
    currentChat = null;
 
    await loadCustomers();
 
-   el("profileName").textContent = "z Admin";
+   el("profileName").textContent = "SN Admin";
    el("profileRole").textContent = "Administrator";
-   el("profileAvatar").textContent = "z";
+   el("profileAvatar").textContent = "SN";
    el("adminSideActions").classList.remove("hidden");
    el("customerList").classList.remove("hidden");
    el("chatTitle").textContent = "Customer चुनें";
@@ -472,7 +472,7 @@ async function login() {
    el("profileAvatar").textContent = id.slice(0, 2).toUpperCase();
    el("adminSideActions").classList.add("hidden");
    el("customerList").classList.add("hidden");
-   el("chatTitle").textContent = "z Admin";
+   el("chatTitle").textContent = "SN Admin";
 
    initializeChat();
    await loadMessages();
@@ -542,10 +542,10 @@ function renderCustomers() {
 
  customers.forEach(customer => {
   const item = document.createElement("div");
-  item.claszame = "customer" + (currentChat === customer.id ? " selected" : "");
+  item.className = "customer" + (currentChat === customer.id ? " selected" : "");
 
   const avatar = document.createElement("div");
-  avatar.claszame = "avatar";
+  avatar.className = "avatar";
   avatar.textContent = (customer.display_name || "C").slice(0, 1).toUpperCase();
 
   const info = document.createElement("div");
@@ -659,7 +659,7 @@ function renderMessages() {
   ? messages.filter(m => now - new Date(m.created_at).getTime() < 86400000)
   : messages;
 
- const wazearBottom =
+ const wasNearBottom =
   area.scrollHeight - area.scrollTop - area.clientHeight < 120;
 
  // पहले से बने हुए Messages की सूची
@@ -692,14 +692,14 @@ function renderMessages() {
   addedNewMessage = true;
 
   const div = document.createElement("div");
-  div.claszame = "msg " + (m.sender_role === role ? "mine" : "");
+  div.className = "msg " + (m.sender_role === role ? "mine" : "");
   div.dataset.messageId = messageId;
 
   if (m.reply_to) {
    const original = messages.find(x => x.id === m.reply_to);
 
    const rp = document.createElement("div");
-   rp.claszame = "reply-preview";
+   rp.className = "reply-preview";
    rp.textContent = "↪ " + getMessagePreview(original);
 
    div.appendChild(rp);
@@ -708,7 +708,7 @@ function renderMessages() {
   if (m.content_type === "image" || m.content_type === "gif") {
    if (m.media_url) {
     const img = document.createElement("img");
-    img.claszame = "msg-media";
+    img.className = "msg-media";
     img.alt = m.content_type === "gif" ? "GIF" : "Photo";
     img.loading = "eager";
     img.decoding = "async";
@@ -745,7 +745,7 @@ function renderMessages() {
   }
 
   const time = document.createElement("span");
-  time.claszame = "time";
+  time.className = "time";
   time.textContent = new Date(m.created_at).toLocaleTimeString("en-IN", {
    hour: "2-digit",
    minute: "2-digit"
@@ -754,7 +754,7 @@ function renderMessages() {
   div.appendChild(time);
 
   const actions = document.createElement("div");
-  actions.claszame = "msg-actions";
+  actions.className = "msg-actions";
 
   const replyBtn = document.createElement("button");
   replyBtn.textContent = "Reply";
@@ -767,7 +767,7 @@ function renderMessages() {
  });
 
  // केवल नया Message आने पर और User नीचे हो तभी Scroll करें
- if (addedNewMessage && wazearBottom) {
+ if (addedNewMessage && wasNearBottom) {
   area.scrollTop = area.scrollHeight;
  }
 }

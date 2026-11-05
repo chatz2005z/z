@@ -133,6 +133,20 @@ button{cursor:pointer;border:0}
 }
 .reply-bar button{background:transparent;color:#075e54}
 
+/* MEDIA */
+.msg-media{
+ display:block;max-width:100%;width:auto;max-height:320px;
+ object-fit:contain;border-radius:7px;margin:2px 0
+}
+.msg video{
+ width:100%;max-width:380px;max-height:320px;background:#000;
+ border-radius:7px
+}
+.media-status{
+ font-size:12px;color:#075e54;text-align:center;
+ padding:5px 10px;background:#e0f2ed
+}
+
 /* ADMIN */
 .admin-panel{
  position:absolute;inset:0;background:#f3f6f7;z-index:5;overflow-y:auto;padding:20px
@@ -169,6 +183,7 @@ button{cursor:pointer;border:0}
  .msg{max-width:88%}
  .admin-grid{grid-template-columns:1fr}
  .admin-panel{padding:14px}
+ .msg video{max-width:100%}
 }
 </style>
 </head>
@@ -256,8 +271,10 @@ button{cursor:pointer;border:0}
 
   <div class="input-area">
    <button onclick="toggleEmoji()" title="Emoji">☺</button>
-   <button onclick="document.getElementById('mediaInput').click()" title="Media">＋</button>
-   <input type="file" id="mediaInput" accept="image/*,video/*" hidden onchange="sendMedia(event)">
+   <button onclick="document.getElementById('mediaInput').click()" title="Photo, Video और GIF">＋</button>
+   <input type="file" id="mediaInput"
+    accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"
+    hidden onchange="sendMedia(event)">
    <textarea id="messageInput" rows="1" placeholder="Type a message..." onkeydown="handleEnter(event)"></textarea>
    <button class="send-btn" onclick="sendMessage()">➤</button>
   </div>
@@ -283,7 +300,7 @@ button{cursor:pointer;border:0}
   </div>
 
   <div class="warning">
-   Customer Registration और Text Chat Supabase से जुड़े हैं। Photo, Video और GIF अगली प्रक्रिया में जोड़े जाएँगे।
+   Photo, Video और GIF Upload सक्रिय किए जा रहे हैं। अधिकतम फ़ाइल साइज़ 50 MB है।
   </div>
 
   <div class="admin-grid">
@@ -328,6 +345,16 @@ const SUPABASE_URL = "https://nydjcnjchitymhvpfwjx.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_1z-u2t6-4Ziaqm-cZ6KW7A_NYcYLDkT";
 const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 const FUNCTION_NAME = "z-private-chat";
+
+const MAX_MEDIA_SIZE = 50 * 1024 * 1024;
+const ALLOWED_MEDIA_TYPES = [
+ "image/jpeg",
+ "image/png",
+ "image/webp",
+ "image/gif",
+ "video/mp4",
+ "video/webm"
+];
 
 let role = "customer";
 let currentUser = null;
@@ -606,6 +633,14 @@ function stopRefresh() {
  refreshTimer = null;
 }
 
+function getMessagePreview(message) {
+ if (!message) return "पुराना संदेश";
+ if (message.content_type === "image") return "📷 Photo";
+ if (message.content_type === "gif") return "GIF";
+ if (message.content_type === "video") return "🎥 Video";
+ return message.message_text || "Message";
+}
+
 function renderMessages() {
  const area = el("messages");
  area.innerHTML = '<div class="date-label">TODAY</div>';
@@ -625,14 +660,46 @@ function renderMessages() {
 
    const rp = document.createElement("div");
    rp.className = "reply-preview";
-   rp.textContent = "↪ " + (original?.message_text || "पुराना संदेश");
+   rp.textContent = "↪ " + getMessagePreview(original);
 
    div.appendChild(rp);
   }
 
-  const p = document.createElement("p");
-  p.textContent = m.message_text || "";
-  div.appendChild(p);
+  if (m.content_type === "image" || m.content_type === "gif") {
+   if (m.media_url) {
+    const img = document.createElement("img");
+    img.className = "msg-media";
+    img.src = m.media_url;
+    img.alt = m.content_type === "gif" ? "GIF" : "Photo";
+    img.loading = "lazy";
+    img.draggable = false;
+    div.appendChild(img);
+   } else {
+    const unavailable = document.createElement("p");
+    unavailable.textContent = "Photo उपलब्ध नहीं है।";
+    div.appendChild(unavailable);
+   }
+
+  } else if (m.content_type === "video") {
+   if (m.media_url) {
+    const video = document.createElement("video");
+    video.src = m.media_url;
+    video.controls = true;
+    video.preload = "metadata";
+    video.setAttribute("controlsList", "nodownload");
+    video.setAttribute("disablePictureInPicture", "");
+    div.appendChild(video);
+   } else {
+    const unavailable = document.createElement("p");
+    unavailable.textContent = "Video उपलब्ध नहीं है।";
+    div.appendChild(unavailable);
+   }
+
+  } else {
+   const p = document.createElement("p");
+   p.textContent = m.message_text || "";
+   div.appendChild(p);
+  }
 
   const time = document.createElement("span");
   time.className = "time";
@@ -683,11 +750,81 @@ async function sendMessage() {
  } catch (error) {
   alert("Message नहीं भेजा गया: " + error.message);
  }
+
 }
 
-function sendMedia(event) {
- event.target.value = "";
- alert("Photo, Video और GIF Upload अगला चरण है। अभी केवल Text और Emoji Chat सक्रिय है।");
+async function sendMedia(event) {
+ const input = event.target;
+ const file = input.files && input.files[0];
+
+ if (!file) return;
+
+ if (role === "admin" && !currentChat) {
+  input.value = "";
+  alert("पहले Customer चुनिए।");
+  return;
+ }
+
+ if (!ALLOWED_MEDIA_TYPES.includes(file.type)) {
+  input.value = "";
+  alert("केवल JPG, PNG, WEBP, GIF, MP4 और WEBM फ़ाइल भेज सकते हैं।");
+  return;
+ }
+
+ if (file.size <= 0 || file.size > MAX_MEDIA_SIZE) {
+  input.value = "";
+  alert("फ़ाइल का साइज़ 50 MB से कम होना चाहिए।");
+  return;
+ }
+
+ const mediaButton = document.querySelector('.input-area button[title="Photo, Video और GIF"]');
+ const originalText = mediaButton.textContent;
+
+ mediaButton.disabled = true;
+ mediaButton.textContent = "…";
+
+ try {
+  const uploadInfo = await callFunction("media_upload_url", {
+   customer_id: role === "admin" ? currentChat : undefined,
+   mime_type: file.type,
+   file_size: file.size
+  });
+
+  if (!uploadInfo || !uploadInfo.path || !uploadInfo.token) {
+   throw new Error("Upload URL नहीं मिला।");
+  }
+
+  const { data: uploaded, error: uploadError } = await sbClient.storage
+   .from("chat-media")
+   .uploadToSignedUrl(
+    uploadInfo.path,
+    uploadInfo.token,
+    file,
+    { contentType: file.type, upsert: false }
+   );
+
+  if (uploadError) throw uploadError;
+
+  await callFunction("send_media", {
+   customer_id: role === "admin" ? currentChat : undefined,
+   storage_path: uploaded.path || uploadInfo.path,
+   mime_type: file.type,
+   file_size: file.size,
+   reply_to: replyMessage
+  });
+
+  cancelReply();
+  await loadMessages();
+
+ } catch (error) {
+  console.error("Media upload error:", error);
+  alert("Media भेजने में समस्या हुई: " + error.message);
+
+ } finally {
+  mediaButton.disabled = false;
+  mediaButton.textContent = originalText;
+  input.value = "";
+ }
 }
 
 function startReply(id) {
@@ -696,7 +833,7 @@ function startReply(id) {
 
  replyMessage = id;
 
- el("replyText").textContent = "Reply: " + (m.message_text || "Message");
+ el("replyText").textContent = "Reply: " + getMessagePreview(m);
  el("replyBar").classList.remove("hidden");
  el("messageInput").focus();
 }

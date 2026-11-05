@@ -356,7 +356,7 @@ function setRole(r) {
 }
 
 async function callFunction(action, extra = {}) {
- const { data, error } = await supabase.functions.invoke(FUNCTION_NAME, {
+ const { data, error } = await sbClient.functions.invoke(FUNCTION_NAME, {
   body: {
    action,
    token: customerToken,
@@ -457,7 +457,7 @@ async function login() {
   alert("Login असफल: " + error.message);
 
   if (role === "admin") {
-   await supabase.auth.signOut();
+   await sbClient.auth.signOut();
   }
 
   customerToken = null;
@@ -497,7 +497,7 @@ async function logout() {
  messages = [];
  replyMessage = null;
 
- await supabase.auth.signOut();
+ await sbClient.auth.signOut();
  showLogin();
 }
 

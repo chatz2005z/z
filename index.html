@@ -204,12 +204,12 @@ button{cursor:pointer;border:0}
 
   <div class="field">
    <label>Customer ID</label>
-   <input id="loginId" placeholder="अपनी ID डालें" autocomplete="username">
+   <input id="loginId" name="customer-chat-id" placeholder="अपनी ID डालें" autocomplete="off" autocapitalize="off" spellcheck="false">
   </div>
 
   <div class="field">
    <label>Password</label>
-   <input id="loginPassword" type="password" placeholder="अपना Password डालें" autocomplete="current-password">
+   <input id="loginPassword" name="customer-chat-secret" type="password" placeholder="अपना Password डालें" autocomplete="new-password">
   </div>
 
   <button class="primary" onclick="login()">START</button>
@@ -308,16 +308,14 @@ button{cursor:pointer;border:0}
     <h3>＋ Customer Registration</h3>
     <input id="newName" placeholder="Customer Name">
     <input id="newId" placeholder="Create Customer ID">
-    <input id="newPrefix" placeholder="Password Prefix (Example: Z)" maxlength="1">
+    <input id="newPassword" type="text" name="new-customer-password" placeholder="Customer Password (Example: A123)" autocomplete="new-password">
     <button onclick="createCustomer()">Create Customer</button>
     <p id="createStatus" style="font-size:12px;margin-top:10px"></p>
    </div>
 
    <div class="admin-box">
-    <h3>⏱ Time Password Format</h3>
-    <p style="font-size:13px">Password का प्रारूप:</p>
-    <div style="font-size:25px;font-weight:bold;color:#075e54;margin:15px 0" id="timePassword">ZHHMM</div>
-    <p style="font-size:12px;color:#667781">Customer को Prefix + भारत का वर्तमान सर्वर समय (HHMM) देना होगा।</p>
+    <h3>🔐 Customer Password</h3>
+    <p style="font-size:13px;line-height:1.6">हर Customer का अलग स्थायी Password होगा। उदाहरण: A123 या B456। Admin यहाँ से पुराने Customer का Password भी बदल सकता है।</p>
    </div>
 
    <div class="admin-box">
@@ -341,7 +339,7 @@ button{cursor:pointer;border:0}
 
 <script>
 const SUPABASE_URL = "https://nydjcnjchitymhvpfwjx.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_1z-u2t6-4Ziaqm-cZ6KW7A_NYcYLDkT";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_1z-u2t6-4Ziaqm-cZ6KW7A_NyYcLDkT";
 const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 const FUNCTION_NAME = "z-private-chat";
 
@@ -374,7 +372,22 @@ function setRole(r) {
  el("customerTab").classList.toggle("active", r === "customer");
  el("adminTab").classList.toggle("active", r === "admin");
  el("loginId").placeholder = r === "admin" ? "Admin Email डालें" : "Customer ID डालें";
- el("loginPassword").autocomplete = r === "admin" ? "current-password" : "off";
+
+ // Customer login fields के लिए password-manager hints.
+ // कुछ browsers इन hints को अनदेखा कर सकते हैं।
+ if (r === "admin") {
+  el("loginId").name = "username";
+  el("loginId").autocomplete = "username";
+  el("loginPassword").name = "password";
+  el("loginPassword").autocomplete = "current-password";
+ } else {
+  el("loginId").name = "customer-chat-id";
+  el("loginId").autocomplete = "off";
+  el("loginPassword").name = "customer-chat-secret";
+  el("loginPassword").autocomplete = "new-password";
+  el("loginId").value = "";
+  el("loginPassword").value = "";
+ }
 
  const labels = document.querySelectorAll(".field label");
  if (labels[0]) labels[0].textContent = r === "admin" ? "Admin Email" : "Customer ID";
@@ -1018,10 +1031,10 @@ function closeAdmin() {
 async function createCustomer() {
  const name = el("newName").value.trim();
  const id = el("newId").value.trim();
- const prefix = el("newPrefix").value.trim();
+ const password = el("newPassword").value.trim();
 
- if (!name || !id || !/^[A-Za-z]$/.test(prefix)) {
-  alert("नाम, Customer ID और एक अक्षर का Prefix (जैसे Z) भरें।");
+ if (!name || !id || !/^[A-Za-z][0-9]+$/.test(password)) {
+  alert("नाम, Customer ID और ऐसा Password भरें जिसमें पहला अक्षर और उसके बाद नंबर हों। उदाहरण: A123");
   return;
  }
 
@@ -1029,20 +1042,44 @@ async function createCustomer() {
   const result = await callFunction("admin_create_customer", {
    display_name: name,
    login_id: id,
-   password_prefix: prefix
+   password: password
   });
 
   el("createStatus").textContent =
-   "Customer सफलतापूर्वक बन गया: " + result.customer.login_id;
+   "Customer बन गया: " + result.customer.login_id + " | Password: " + password;
 
   el("newName").value = "";
   el("newId").value = "";
-  el("newPrefix").value = "";
+  el("newPassword").value = "";
 
   await loadCustomers();
 
  } catch (error) {
   alert("Customer नहीं बना: " + error.message);
+ }
+}
+
+async function setCustomerPassword(customerId, input, status) {
+ const password = input.value.trim();
+
+ if (!/^[A-Za-z][0-9]+$/.test(password)) {
+  alert("Password में पहला अक्षर और उसके बाद नंबर होने चाहिए। उदाहरण: A123");
+  input.focus();
+  return;
+ }
+
+ try {
+  await callFunction("admin_set_customer_password", {
+   customer_id: customerId,
+   password: password
+  });
+
+  status.textContent = "Password सफलतापूर्वक बदल दिया गया।";
+  input.value = "";
+  await loadCustomers();
+
+ } catch (error) {
+  alert("Password बदलने में समस्या: " + error.message);
  }
 }
 
@@ -1057,20 +1094,35 @@ function renderAdminCustomers() {
 
  customers.forEach(c => {
   const row = document.createElement("div");
-  row.style.cssText = "padding:8px 0;border-bottom:1px solid #eee;font-size:13px";
-  row.textContent =
-   `${c.display_name} (${c.login_id}) — ${c.is_active ? "Active" : "Inactive"}`;
+  row.style.cssText = "padding:10px 0;border-bottom:1px solid #eee;font-size:13px";
 
+  const title = document.createElement("div");
+  title.style.cssText = "font-weight:bold;margin-bottom:5px";
+  title.textContent =
+   `${c.display_name || c.login_id} (${c.login_id}) — ${c.is_active ? "Active" : "Inactive"}`;
+
+  const state = document.createElement("div");
+  state.style.cssText = "font-size:11px;color:#667781;margin-bottom:5px";
+  state.textContent = c.has_password ? "Password सेट है" : "Password सेट नहीं है";
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.placeholder = "नया Password (जैसे A123)";
+  input.autocomplete = "new-password";
+  input.name = "customer-password-" + c.id;
+  input.style.cssText = "width:100%;padding:9px;border:1px solid #d8e0e3;border-radius:7px;margin:4px 0";
+
+  const status = document.createElement("p");
+  status.style.cssText = "font-size:11px;color:#075e54;margin-top:4px";
+
+  const button = document.createElement("button");
+  button.textContent = "Set / Change Password";
+  button.onclick = () => setCustomerPassword(c.id, input, status);
+
+  row.append(title, state, input, button, status);
   box.appendChild(row);
  });
 }
-
-function updateAdminClock() {
- el("timePassword").textContent =
-  (el("newPrefix").value.trim() || "Z") + "HHMM";
-}
-
-setInterval(updateAdminClock, 1000);
 
 window.addEventListener("pagehide", () => {
  if (role === "customer") {

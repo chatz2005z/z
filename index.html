@@ -440,7 +440,7 @@ async function login() {
    if (error) throw error;
    if (!data.session) throw new Error("Admin Login session नहीं मिली।");
 
-   currentUser = { role: "admin", name: "SN Admin" };
+   currentUser = { role: "admin", name: "Admin" };
    customerToken = null;
    currentChat = null;
 
